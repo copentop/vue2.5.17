@@ -5,6 +5,13 @@
  */
 /*  */
 
+// my fn
+function _log(text, prefix) {
+  prefix = prefix || '';
+  console.log(prefix + " -> ", text);
+}
+// ================================
+
 // 只读的空对象
 var emptyObject = Object.freeze({});
 
@@ -104,6 +111,8 @@ function toNumber (val) {
 }
 
 /**
+ * 创建对象集合
+ *
  * Make a map and return a function for checking if a key
  * is in that map.
  */
@@ -111,6 +120,7 @@ function makeMap (
   str,
   expectsLowerCase
 ) {
+
   var map = Object.create(null);
   var list = str.split(',');
   for (var i = 0; i < list.length; i++) {
@@ -718,7 +728,12 @@ if (true) {
 /*  */
 
 // ====================================================
+// 全局 uid
 var uid = 0;
+
+// ===================================================
+// 观察模式
+// 每个观察者必须实现 update 方法
 
 /**
  * A dep is an observable that can have multiple
@@ -768,6 +783,8 @@ function popTarget () {
 
 // ==============================================
 
+// 虚拟节点
+
 /*  */
 
 var VNode = function VNode (
@@ -780,6 +797,7 @@ var VNode = function VNode (
   componentOptions,
   asyncFactory
 ) {
+  _log('', 'fn VNode');
   this.tag = tag;
   this.data = data;
   this.children = children;
@@ -1521,6 +1539,7 @@ function mergeOptions (
   child,
   vm
 ) {
+  _log({'parent':parent, 'child':child } , 'fn mergeOptions');
   //if (process.env.NODE_ENV !== 'production') {
   if (true) {
     checkComponents(child);
@@ -2492,6 +2511,11 @@ function getFirstComponentChild (children) {
 }
 
 /*  */
+
+
+// ==================================
+
+// Vue 事件
 
 /*  */
 
@@ -4725,7 +4749,9 @@ function renderMixin (Vue) {
 var uid$3 = 0;
 
 function initMixin (Vue) {
+  _log('', 'initMixin')
   Vue.prototype._init = function (options) {
+    _log(options, '_init')
     var vm = this;
 
     // a uid
@@ -4756,9 +4782,10 @@ function initMixin (Vue) {
         vm
       );
     }
+
     /* istanbul ignore else */
     //if (process.env.NODE_ENV !== 'production') {
-	if (true) {
+	  if (true) {
       initProxy(vm);
     } else {
       vm._renderProxy = vm;
@@ -4777,16 +4804,18 @@ function initMixin (Vue) {
 
     /* istanbul ignore if */
     //if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-	if ( config.performance && mark) {
+	  if ( config.performance && mark) {
       vm._name = formatComponentName(vm, false);
       mark(endTag);
       measure(("vue " + (vm._name) + " init"), startTag, endTag);
     }
 
+    // 指定元素
     if (vm.$options.el) {
+      _log(vm.$options.el, '_init -> vm.$mount')
       vm.$mount(vm.$options.el);
     }
-  };
+  }; // end _init
 }
 
 function initInternalComponent (vm, options) {
@@ -4810,6 +4839,7 @@ function initInternalComponent (vm, options) {
 
 function resolveConstructorOptions (Ctor) {
   var options = Ctor.options;
+  _log(options, 'fn resolveConstructorOptions')
   if (Ctor.super) {
     var superOptions = resolveConstructorOptions(Ctor.super);
     var cachedSuperOptions = Ctor.superOptions;
@@ -4877,11 +4907,19 @@ function Vue (options) {
   ) {
     warn('Vue is a constructor and should be called with the `new` keyword');
   }
+  _log(options, 'new Vue()')
   this._init(options);
 }
-
+// Vue.prototype._init
 initMixin(Vue);
+
+// Vue.prototype.$data
+// Vue.prototype.$props
+// Vue.prototype.$set
+// Vue.prototype.$delete
+// Vue.prototype.$watch
 stateMixin(Vue);
+
 eventsMixin(Vue);
 lifecycleMixin(Vue);
 renderMixin(Vue);
@@ -5186,6 +5224,7 @@ var builtInComponents = {
 /*  */
 
 function initGlobalAPI (Vue) {
+  _log('', 'fn initGlobalAPI')
   // config
   var configDef = {};
   configDef.get = function () { return config; };
@@ -5198,6 +5237,7 @@ function initGlobalAPI (Vue) {
     };
   }
   Object.defineProperty(Vue, 'config', configDef);
+  _log(Vue.config , 'fn initGlobalAPI')
 
   // exposed util methods.
   // NOTE: these are not considered part of the public API - avoid relying on
@@ -5214,6 +5254,9 @@ function initGlobalAPI (Vue) {
   Vue.nextTick = nextTick;
 
   Vue.options = Object.create(null);
+  _log(ASSET_TYPES, 'fn initGlobalAPI ASSET_TYPES')
+
+  // ["component", "directive", "filter"]
   ASSET_TYPES.forEach(function (type) {
     Vue.options[type + 's'] = Object.create(null);
   });
@@ -5222,6 +5265,7 @@ function initGlobalAPI (Vue) {
   // components with in Weex's multi-instance scenarios.
   Vue.options._base = Vue;
 
+  _log(Vue.options.components, 'fn initGlobalAPI extend')
   extend(Vue.options.components, builtInComponents);
 
   initUse(Vue);
@@ -5296,6 +5340,8 @@ var isFalsyAttrValue = function (val) {
 };
 
 /*  */
+
+// ====================================
 
 function genClassForVnode (vnode) {
   var data = vnode.data;
@@ -5454,14 +5500,17 @@ var isTextInputType = makeMap('text,number,password,search,email,tel,url');
 /*  */
 
 /**
+ * 查找元素： document.querySelector
+ *
  * Query an element selector if it's not an element already.
  */
 function query (el) {
+  _log('', 'fn query')
   if (typeof el === 'string') {
     var selected = document.querySelector(el);
     if (!selected) {
       //process.env.NODE_ENV !== 'production' && warn(
-	  warn(
+	    warn(
         'Cannot find element: ' + el
       );
       return document.createElement('div')
@@ -5545,6 +5594,8 @@ var nodeOps = Object.freeze({
 	setTextContent: setTextContent,
 	setStyleScope: setStyleScope
 });
+
+// =================================
 
 /*  */
 
@@ -8715,6 +8766,8 @@ Vue.config.isUnknownElement = isUnknownElement;
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives);
+// 扩展配置项的组件
+_log('', 'global extend > Vue.options.components')
 extend(Vue.options.components, platformComponents);
 
 // install platform patch function
@@ -9291,6 +9344,7 @@ function parse (
   template,
   options
 ) {
+  _log('', 'fn parse : HTML->AST')
   warn$2 = options.warn || baseWarn;
 
   platformIsPreTag = options.isPreTag || no;
@@ -9358,8 +9412,9 @@ function parse (
 
       if (isForbiddenTag(element) && !isServerRendering()) {
         element.forbidden = true;
+
         //process.env.NODE_ENV !== 'production' && warn$2(
-		warn$2(
+		    warn$2(
           'Templates should only be responsible for mapping the state to the ' +
           'UI. Avoid placing tags with side-effects in your templates, such as ' +
           "<" + tag + ">" + ', as they will not be parsed.'
@@ -9393,7 +9448,7 @@ function parse (
 
       function checkRootConstraints (el) {
         //if (process.env.NODE_ENV !== 'production') {
-		if (true) {
+		    if (true) {
           if (el.tag === 'slot' || el.tag === 'template') {
             warnOnce(
               "Cannot use <" + (el.tag) + "> as component root element because it may " +
@@ -9422,7 +9477,7 @@ function parse (
             block: element
           });
         //} else if (process.env.NODE_ENV !== 'production') {
-		} else if (true) {
+		    } else if (true) {
           warnOnce(
             "Component template should contain exactly one root element. " +
             "If you are using v-if on multiple elements, " +
@@ -9465,7 +9520,7 @@ function parse (
     chars: function chars (text) {
       if (!currentParent) {
         //if (process.env.NODE_ENV !== 'production') {
-		if (true) {
+		    if (true) {
           if (text === template) {
             warnOnce(
               'Component template requires a root element, rather than just text.'
@@ -10896,6 +10951,8 @@ function createFunction (code, errors) {
 }
 
 function createCompileToFunctionFn (compile) {
+  _log('', 'createCompileToFunctionFn')
+
   var cache = Object.create(null);
 
   return function compileToFunctions (
@@ -10903,6 +10960,7 @@ function createCompileToFunctionFn (compile) {
     options,
     vm
   ) {
+    _log('', 'compileToFunctions')
     options = extend({}, options);
     var warn$$1 = options.warn || warn;
     delete options.warn;
@@ -10987,7 +11045,9 @@ function createCompileToFunctionFn (compile) {
 /*  */
 
 function createCompilerCreator (baseCompile) {
+  _log('', 'createCompilerCreator N');
   return function createCompiler (baseOptions) {
+    _log('', 'createCompiler N')
     function compile (
       template,
       options
@@ -11046,6 +11106,8 @@ var createCompiler = createCompilerCreator(function baseCompile (
   template,
   options
 ) {
+  _log('', 'global createCompilerCreator');
+
   var ast = parse(template.trim(), options);
   if (options.optimize !== false) {
     optimize(ast, options);
@@ -11085,11 +11147,15 @@ var idToTemplate = cached(function (id) {
   return el && el.innerHTML
 });
 
+// 嵌入html
+
+// Vue.prototype.$mount
 var mount = Vue.prototype.$mount;
 Vue.prototype.$mount = function (
   el,
   hydrating
 ) {
+  _log(el, 'fn Vue.prototype.$mount');
   el = el && query(el);
 
   /* istanbul ignore if */
@@ -11122,7 +11188,7 @@ Vue.prototype.$mount = function (
         template = template.innerHTML;
       } else {
         //if (process.env.NODE_ENV !== 'production') {
-		if (true) {
+		    if (true) {
           warn('invalid template option:' + template, this);
         }
         return this
@@ -11133,7 +11199,7 @@ Vue.prototype.$mount = function (
     if (template) {
       /* istanbul ignore if */
       //if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-	  if ( config.performance && mark) {
+	   if ( config.performance && mark) {
         mark('compile');
       }
 
@@ -11143,6 +11209,7 @@ Vue.prototype.$mount = function (
         delimiters: options.delimiters,
         comments: options.comments
       }, this);
+
       var render = ref.render;
       var staticRenderFns = ref.staticRenderFns;
       options.render = render;
@@ -11156,6 +11223,8 @@ Vue.prototype.$mount = function (
       }
     }
   }
+
+  _log(hydrating, 'fn mount.call')
   return mount.call(this, el, hydrating)
 };
 
@@ -11164,6 +11233,7 @@ Vue.prototype.$mount = function (
  * of SVG elements in IE as well.
  */
 function getOuterHTML (el) {
+  _log({'el':el, 'outerHTML': el.outerHTML}, 'fn getOuterHTML')
   if (el.outerHTML) {
     return el.outerHTML
   } else {
