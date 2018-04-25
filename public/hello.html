@@ -12,13 +12,15 @@
 </body>
 <script type="text/javascript">
 
-
-	var app = new Vue({
+	var options = {
 	  el: '#app',
 	  data: {
 	    message: 'Hello Vue!'
 	  }
-	})
+	};
+
+	console.log('html -> ', options)
+	var app = new Vue(options);
 
 </script>
 </html>
