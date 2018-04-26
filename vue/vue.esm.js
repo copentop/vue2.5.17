@@ -2728,6 +2728,8 @@ var activeInstance = null;
 var isUpdatingChildComponent = false;
 
 function initLifecycle (vm) {
+  _log('', 'fn initLifecycle');
+
   var options = vm.$options;
 
   // locate first non-abstract parent
@@ -2754,6 +2756,8 @@ function initLifecycle (vm) {
 }
 
 function lifecycleMixin (Vue) {
+  _log('', 'fn lifecycleMixin');
+
   Vue.prototype._update = function (vnode, hydrating) {
     var vm = this;
     var prevEl = vm.$el;
@@ -2770,6 +2774,7 @@ function lifecycleMixin (Vue) {
       // updates
       vm.$el = vm.__patch__(prevVnode, vnode);
     }
+
     activeInstance = prevActiveInstance;
     // update __vue__ reference
     if (prevEl) {
@@ -2798,6 +2803,7 @@ function lifecycleMixin (Vue) {
     if (vm._isBeingDestroyed) {
       return
     }
+
     callHook(vm, 'beforeDestroy');
     vm._isBeingDestroyed = true;
     // remove self from parent
@@ -2809,6 +2815,7 @@ function lifecycleMixin (Vue) {
     if (vm._watcher) {
       vm._watcher.teardown();
     }
+
     var i = vm._watchers.length;
     while (i--) {
       vm._watchers[i].teardown();
@@ -2842,11 +2849,13 @@ function mountComponent (
   el,
   hydrating
 ) {
+  _log(el, 'fn mountComponent');
+
   vm.$el = el;
   if (!vm.$options.render) {
     vm.$options.render = createEmptyVNode;
     //if (process.env.NODE_ENV !== 'production') {
-	if (true) {
+	  if (true) {
       /* istanbul ignore if */
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
         vm.$options.el || el) {
@@ -2902,6 +2911,7 @@ function mountComponent (
       }
     }
   }, true /* isRenderWatcher */);
+
   hydrating = false;
 
   // manually mounted instance, call mounted on self
@@ -3105,7 +3115,7 @@ function flushSchedulerQueue () {
     watcher.run();
     // in dev build, check and stop circular updates.
     //if (process.env.NODE_ENV !== 'production' && has[id] != null) {
-	if ( has[id] != null) {
+	  if ( has[id] != null) {
       circular[id] = (circular[id] || 0) + 1;
       if (circular[id] > MAX_UPDATE_COUNT) {
         warn(
@@ -3197,6 +3207,10 @@ function queueWatcher (watcher) {
 
 /*  */
 
+// =====================================================
+// 
+// 观察者
+
 var uid$1 = 0;
 
 /**
@@ -3211,10 +3225,13 @@ var Watcher = function Watcher (
   options,
   isRenderWatcher
 ) {
+  _log('', 'fn Watcher');
+
   this.vm = vm;
   if (isRenderWatcher) {
     vm._watcher = this;
   }
+
   vm._watchers.push(this);
   // options
   if (options) {
@@ -3226,6 +3243,7 @@ var Watcher = function Watcher (
   } else {
     this.deep = this.user = this.computed = this.sync = false;
   }
+
   this.cb = cb;
   this.id = ++uid$1; // uid for batching
   this.active = true;
@@ -3234,6 +3252,7 @@ var Watcher = function Watcher (
   this.newDeps = [];
   this.depIds = new _Set();
   this.newDepIds = new _Set();
+
   //this.expression = process.env.NODE_ENV !== 'production'
   this.expression = true
     ? expOrFn.toString()
@@ -3246,7 +3265,7 @@ var Watcher = function Watcher (
     if (!this.getter) {
       this.getter = function () {};
       //process.env.NODE_ENV !== 'production' && warn(
-	  warn(
+	    warn(
         "Failed watching path: \"" + expOrFn + "\" " +
         'Watcher only accepts simple dot-delimited paths. ' +
         'For full control, use a function instead.',
@@ -3254,6 +3273,7 @@ var Watcher = function Watcher (
       );
     }
   }
+
   if (this.computed) {
     this.value = undefined;
     this.dep = new Dep();
@@ -3267,8 +3287,10 @@ var Watcher = function Watcher (
  */
 Watcher.prototype.get = function get () {
   pushTarget(this);
+
   var value;
   var vm = this.vm;
+
   try {
     value = this.getter.call(vm, vm);
   } catch (e) {
@@ -3417,6 +3439,8 @@ Watcher.prototype.depend = function depend () {
 };
 
 /**
+ * 卸载
+ * 
  * Remove self from all dependencies' subscriber list.
  */
 Watcher.prototype.teardown = function teardown () {
@@ -3436,6 +3460,8 @@ Watcher.prototype.teardown = function teardown () {
     this.active = false;
   }
 };
+
+// ==========================================
 
 /*  */
 
@@ -3593,7 +3619,7 @@ function initComputed (vm, computed) {
     var userDef = computed[key];
     var getter = typeof userDef === 'function' ? userDef : userDef.get;
     //if (process.env.NODE_ENV !== 'production' && getter == null) {
-	if ( getter == null) {
+	  if ( getter == null) {
       warn(
         ("Getter is missing for computed property \"" + key + "\"."),
         vm
@@ -3990,7 +4016,7 @@ function bindObjectProps (
   if (value) {
     if (!isObject(value)) {
       //process.env.NODE_ENV !== 'production' && warn(
-	  warn(
+	    warn(
         'v-bind without argument expects an Object or Array value',
         this
       );
@@ -4142,6 +4168,8 @@ function FunctionalRenderContext (
   parent,
   Ctor
 ) {
+  _log('', 'fn FunctionalRenderContext');
+
   var options = Ctor.options;
   // ensure the createElement function in functional components
   // gets a unique context - this is necessary for correct named slot check
@@ -4349,6 +4377,8 @@ function createComponent (
   children,
   tag
 ) {
+  _log(Ctor, 'fn createComponent ');
+
   if (isUndef(Ctor)) {
     return
   }
@@ -4465,6 +4495,8 @@ function createComponentInstanceForVnode (
 }
 
 function installComponentHooks (data) {
+  _log('', 'fn installComponentHooks');
+
   var hooks = data.hook || (data.hook = {});
   for (var i = 0; i < hooksToMerge.length; i++) {
     var key = hooksToMerge[i];
@@ -4514,6 +4546,8 @@ function createElement (
   normalizationType,
   alwaysNormalize
 ) {
+  _log('', 'fn createElement');
+
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children;
     children = data;
@@ -4532,9 +4566,11 @@ function _createElement (
   children,
   normalizationType
 ) {
+  _log('', 'fn _createElement');
+
   if (isDef(data) && isDef((data).__ob__)) {
     //process.env.NODE_ENV !== 'production' && warn(
-	warn(
+	  warn(
       "Avoid using observed data object as vnode data: " + (JSON.stringify(data)) + "\n" +
       'Always create fresh vnode data objects in each render!',
       context
@@ -4696,7 +4732,7 @@ function renderMixin (Vue) {
 
     // reset _rendered flag on slots for duplicate slot check
     //if (process.env.NODE_ENV !== 'production') {
-	if (true) {
+	  if (true) {
       for (var key in vm.$slots) {
         // $flow-disable-line
         vm.$slots[key]._rendered = false;
@@ -4759,6 +4795,7 @@ var uid$3 = 0;
 
 function initMixin (Vue) {
   _log('', 'initMixin')
+
   Vue.prototype._init = function (options) {
     _log(options, '_init')
     var vm = this;
@@ -4805,6 +4842,7 @@ function initMixin (Vue) {
     initLifecycle(vm);
     initEvents(vm);
     initRender(vm);
+
     _log('', 'fn initMixin hook->beforeCreate')
     callHook(vm, 'beforeCreate');
     initInjections(vm); // resolve injections before data/props
@@ -4940,6 +4978,8 @@ renderMixin(Vue);
 /*  */
 
 function initUse (Vue) {
+  _log('', 'fn initUse');
+
   Vue.use = function (plugin) {
     var installedPlugins = (this._installedPlugins || (this._installedPlugins = []));
     if (installedPlugins.indexOf(plugin) > -1) {
@@ -4971,6 +5011,8 @@ function initMixin$1 (Vue) {
 /*  */
 
 function initExtend (Vue) {
+  _log('', 'fn initExtend');
+
   /**
    * Each instance constructor, including Vue, has a unique
    * cid. This enables us to create wrapped "child
@@ -4983,6 +5025,8 @@ function initExtend (Vue) {
    * Class inheritance
    */
   Vue.extend = function (extendOptions) {
+    _log('', 'fn Vue.extend');
+
     extendOptions = extendOptions || {};
     var Super = this;
     var SuperId = Super.cid;
@@ -5064,6 +5108,8 @@ function initComputed$1 (Comp) {
 /*  */
 
 function initAssetRegisters (Vue) {
+  _log('', 'fn initAssetRegisters ASSET_TYPES: Vue.[TYPE] ');
+
   /**
    * Create asset registration methods.
    */
@@ -5077,7 +5123,7 @@ function initAssetRegisters (Vue) {
       } else {
         /* istanbul ignore if */
         //if (process.env.NODE_ENV !== 'production' && type === 'component') {
-		if ( type === 'component') {
+		    if ( type === 'component') {
           validateComponentName(id);
         }
         if (type === 'component' && isPlainObject(definition)) {
@@ -5515,7 +5561,8 @@ var isTextInputType = makeMap('text,number,password,search,email,tel,url');
  * Query an element selector if it's not an element already.
  */
 function query (el) {
-  _log('', 'fn query')
+  _log('', 'fn query');
+
   if (typeof el === 'string') {
     var selected = document.querySelector(el);
     if (!selected) {
@@ -5534,6 +5581,8 @@ function query (el) {
 /*  */
 
 function createElement$1 (tagName, vnode) {
+  _log('', 'fn createElement$1');
+
   var elm = document.createElement(tagName);
   if (tagName !== 'select') {
     return elm
@@ -5546,14 +5595,18 @@ function createElement$1 (tagName, vnode) {
 }
 
 function createElementNS (namespace, tagName) {
+  _log('', 'fn createElementNS');
+
   return document.createElementNS(namespaceMap[namespace], tagName)
 }
 
 function createTextNode (text) {
+  _log('', 'fn createTextNode');
   return document.createTextNode(text)
 }
 
 function createComment (text) {
+  _log('', 'fn createComment');
   return document.createComment(text)
 }
 
@@ -5589,7 +5642,11 @@ function setStyleScope (node, scopeId) {
   node.setAttribute(scopeId, '');
 }
 
-
+/**
+ * 节点操作方法
+ * 
+ * @type {[type]}
+ */
 var nodeOps = Object.freeze({
 	createElement: createElement$1,
 	createElementNS: createElementNS,
@@ -5667,6 +5724,13 @@ var emptyNode = new VNode('', {}, []);
 
 var hooks = ['create', 'activate', 'update', 'remove', 'destroy'];
 
+/**
+ * 相同节点
+ * 
+ * @param  {[type]} a [description]
+ * @param  {[type]} b [description]
+ * @return {[type]}   [description]
+ */
 function sameVnode (a, b) {
   return (
     a.key === b.key && (
@@ -5702,7 +5766,14 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
   return map
 }
 
+/**
+ * 
+ * @param  {[type]} backend [description]
+ * @return {[type]}         [description]
+ */
 function createPatchFunction (backend) {
+  _log('', 'fn createPatchFunction');
+
   var i, j;
   var cbs = {};
 
@@ -5767,6 +5838,8 @@ function createPatchFunction (backend) {
     ownerArray,
     index
   ) {
+    _log('', 'fn createElm');
+
     if (isDef(vnode.elm) && isDef(ownerArray)) {
       // This vnode was used in a previous render!
       // now it's used as a new node, overwriting its elm would cause
@@ -5786,10 +5859,11 @@ function createPatchFunction (backend) {
     var tag = vnode.tag;
     if (isDef(tag)) {
       //if (process.env.NODE_ENV !== 'production') {
-	  if (true) {
+	    if (true) {
         if (data && data.pre) {
           creatingElmInVPre++;
         }
+
         if (isUnknownElement$$1(vnode, creatingElmInVPre)) {
           warn(
             'Unknown custom element: <' + tag + '> - did you ' +
@@ -6087,6 +6161,7 @@ function createPatchFunction (backend) {
         newStartVnode = newCh[++newStartIdx];
       }
     }
+
     if (oldStartIdx > oldEndIdx) {
       refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm;
       addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue);
@@ -6181,6 +6256,7 @@ function createPatchFunction (backend) {
   }
 
   function invokeInsertHook (vnode, queue, initial) {
+    _log('', 'fn invokeInsertHook')
     // delay insert hooks for component root nodes, invoke them after the
     // element is really inserted
     if (isTrue(initial) && isDef(vnode.parent)) {
@@ -6214,7 +6290,7 @@ function createPatchFunction (backend) {
     }
     // assert node match
     //if (process.env.NODE_ENV !== 'production') {
-	if (true) {
+	  if (true) {
       if (!assertNodeMatch(elm, vnode, inVPre)) {
         return false
       }
@@ -6238,7 +6314,7 @@ function createPatchFunction (backend) {
             if (i !== elm.innerHTML) {
               /* istanbul ignore if */
               //if (process.env.NODE_ENV !== 'production' &&
-			  if (
+			        if (
                 typeof console !== 'undefined' &&
                 !hydrationBailed
               ) {
@@ -6265,7 +6341,7 @@ function createPatchFunction (backend) {
             if (!childrenMatch || childNode) {
               /* istanbul ignore if */
               //if (process.env.NODE_ENV !== 'production' &&
-			  if (
+			        if (
                 typeof console !== 'undefined' &&
                 !hydrationBailed
               ) {
@@ -6341,7 +6417,7 @@ function createPatchFunction (backend) {
               invokeInsertHook(vnode, insertedVnodeQueue, true);
               return oldVnode
             //} else if (process.env.NODE_ENV !== 'production') {
-			} else if (true) {
+			      } else if (true) {
               warn(
                 'The client-side rendered virtual DOM tree is not matching ' +
                 'server-rendered content. This is likely caused by incorrect ' +
@@ -6413,7 +6489,7 @@ function createPatchFunction (backend) {
     invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch);
     return vnode.elm
   }
-}
+} // end createPatchFunction
 
 /*  */
 
@@ -6539,6 +6615,8 @@ var baseModules = [
 /*  */
 
 function updateAttrs (oldVnode, vnode) {
+  _log('', 'fn updateAttrs');
+
   var opts = vnode.componentOptions;
   if (isDef(opts) && opts.Ctor.options.inheritAttrs === false) {
     return
@@ -6681,6 +6759,8 @@ var klass = {
 var validDivisionCharRE = /[\w).+\-_$\]]/;
 
 function parseFilters (exp) {
+  _log('', 'fn parseFilters');
+
   var inSingle = false;
   var inDouble = false;
   var inTemplateString = false;
@@ -6947,6 +7027,8 @@ function genComponentModel (
   value,
   modifiers
 ) {
+  _log('', 'fn genComponentModel');
+
   var ref = modifiers || {};
   var number = ref.number;
   var trim = ref.trim;
@@ -7011,6 +7093,7 @@ var expressionEndPos;
 
 
 function parseModel (val) {
+  _log('', 'fn parseModel');
   // Fix https://github.com/vuejs/vue/pull/7730
   // allow v-model="obj.val " (trailing whitespace)
   val = val.trim();
@@ -7104,6 +7187,8 @@ function model (
   dir,
   _warn
 ) {
+  _log('', 'fn model');
+
   warn$1 = _warn;
   var value = dir.value;
   var modifiers = dir.modifiers;
@@ -7556,6 +7641,8 @@ var normalize = cached(function (prop) {
 });
 
 function updateStyle (oldVnode, vnode) {
+  _log('', 'fn updateStyle');
+
   var data = vnode.data;
   var oldData = oldVnode.data;
 
@@ -7668,6 +7755,8 @@ function removeClass (el, cls) {
 /*  */
 
 function resolveTransition (def) {
+  _log('', 'fn resolveTransition');
+
   if (!def) {
     return
   }
@@ -7848,6 +7937,8 @@ function toMs (s) {
 /*  */
 
 function enter (vnode, toggleDisplay) {
+  _log('', 'fn enter');
+
   var el = vnode.elm;
 
   // call leave callback now
@@ -8319,6 +8410,8 @@ function onCompositionEnd (e) {
 }
 
 function trigger (el, type) {
+  _log('', 'fn trigger');
+
   var e = document.createEvent('HTMLEvents');
   e.initEvent(type, true, true);
   el.dispatchEvent(e);
@@ -8497,7 +8590,7 @@ var Transition = {
 
     // warn invalid mode
     //if (process.env.NODE_ENV !== 'production' &&
-	if (
+	  if (
       mode && mode !== 'in-out' && mode !== 'out-in'
     ) {
       warn(
@@ -8811,7 +8904,7 @@ if (inBrowser) {
       }
     }
     //if (process.env.NODE_ENV !== 'production' &&
-	if (
+	  if (
       //process.env.NODE_ENV !== 'test' &&
       config.productionTip !== false &&
       typeof console !== 'undefined'
@@ -8842,6 +8935,8 @@ function parseText (
   text,
   delimiters
 ) {
+  _log('', 'fn parseText');
+
   var tagRE = delimiters ? buildRegex(delimiters) : defaultTagRE;
   if (!tagRE.test(text)) {
     return
@@ -8876,6 +8971,8 @@ function parseText (
 /*  */
 
 function transformNode (el, options) {
+  _log('', 'fn transformNode');
+
   var warn = options.warn || baseWarn;
   var staticClass = getAndRemoveAttr(el, 'class');
   //if (process.env.NODE_ENV !== 'production' && staticClass) {
@@ -9051,6 +9148,8 @@ function decodeAttr (value, shouldDecodeNewlines) {
 }
 
 function parseHTML (html, options) {
+  _log('', 'fn parseHTML');
+
   var stack = [];
   var expectHTML = options.expectHTML;
   var isUnaryTag$$1 = options.isUnaryTag || no;
@@ -9363,6 +9462,7 @@ function parse (
   options
 ) {
   _log('', 'fn parse : HTML->AST')
+
   warn$2 = options.warn || baseWarn;
 
   platformIsPreTag = options.isPreTag || no;
@@ -10302,6 +10402,8 @@ function genHandler (
   name,
   handler
 ) {
+  _log('', 'fn genHandler');
+
   if (!handler) {
     return 'function(){}'
   }
@@ -10964,6 +11066,7 @@ function checkExpression (exp, text, errors) {
 /*  */
 
 function createFunction (code, errors) {
+  _log('', 'fn createFunction');
   try {
     return new Function(code)
   } catch (err) {
@@ -11019,7 +11122,7 @@ function createCompileToFunctionFn (compile) {
 
     // check compilation errors/tips
     //if (process.env.NODE_ENV !== 'production') {
-	if (true) {
+	  if (true) {
       if (compiled.errors && compiled.errors.length) {
         warn$$1(
           "Error compiling template:\n\n" + template + "\n\n" +
@@ -11045,7 +11148,7 @@ function createCompileToFunctionFn (compile) {
     // mostly for codegen development use
     /* istanbul ignore if */
     //if (process.env.NODE_ENV !== 'production') {
-	if (true) {
+	  if (true) {
       if ((!compiled.errors || !compiled.errors.length) && fnGenErrors.length) {
         warn$$1(
           "Failed to generate render function:\n\n" +
@@ -11187,7 +11290,9 @@ Vue.prototype.$mount = function (
   hydrating
 ) {
   _log(el, 'fn Vue.prototype.$mount');
+
   el = el && query(el);
+
 
   /* istanbul ignore if */
   if (el === document.body || el === document.documentElement) {
@@ -11199,6 +11304,7 @@ Vue.prototype.$mount = function (
   }
 
   var options = this.$options;
+  _log(options, '222')
   // resolve template/el and convert to render function
   if (!options.render) {
     var template = options.template;
@@ -11265,6 +11371,7 @@ Vue.prototype.$mount = function (
  */
 function getOuterHTML (el) {
   _log({'el':el, 'outerHTML': el.outerHTML}, 'fn getOuterHTML')
+
   if (el.outerHTML) {
     return el.outerHTML
   } else {

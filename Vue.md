@@ -23,6 +23,22 @@
 	Vue.prototype.$ssrContext
 	Vue.prototype.$mount
 
+	Vue.prototype._o = markOnce;
+	Vue.prototype._n = toNumber;
+	Vue.prototype._s = toString;
+	Vue.prototype._l = renderList;
+	Vue.prototype._t = renderSlot;
+	Vue.prototype._q = looseEqual;
+	Vue.prototype._i = looseIndexOf;
+	Vue.prototype._m = renderStatic;
+	Vue.prototype._f = resolveFilter;
+	Vue.prototype._k = checkKeyCodes;
+	Vue.prototype._b = bindObjectProps;
+	Vue.prototype._v = createTextVNode;
+	Vue.prototype._e = createEmptyVNode;
+	Vue.prototype._u = resolveScopedSlots;
+	Vue.prototype._g = bindObjectListeners;
+
 
 	Vue.extend
 	Vue.use
@@ -43,3 +59,4 @@
 	Vue.config.isReservedAttr
 	Vue.config.getTagNamespace
 	Vue.config.isUnknownElement
+
