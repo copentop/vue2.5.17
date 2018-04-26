@@ -9075,6 +9075,11 @@ var he = {
 
 /*  */
 
+/**
+ * 一元标签集合
+ * 
+ * @type {Boolean}
+ */
 var isUnaryTag = makeMap(
   'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
   'link,meta,param,source,track,wbr'
@@ -9112,16 +9117,28 @@ var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'
 // could use https://www.w3.org/TR/1999/REC-xml-names-19990114/#NT-QName
 // but for Vue templates we can enforce a simple charset
 var ncname = '[a-zA-Z_][\\w\\-\\.]*';
+
 var qnameCapture = "((?:" + ncname + "\\:)?" + ncname + ")";
+
+// /^<((?:[a-zA-Z_][\w\-\.]*\:)?[a-zA-Z_][\w\-\.]*)/
 var startTagOpen = new RegExp(("^<" + qnameCapture));
+
 var startTagClose = /^\s*(\/?)>/;
+
+//  /^<\/((?:[a-zA-Z_][\w\-\.]*\:)?[a-zA-Z_][\w\-\.]*)[^>]*>/
 var endTag = new RegExp(("^<\\/" + qnameCapture + "[^>]*>"));
+
+// DOCTYPE
 var doctype = /^<!DOCTYPE [^>]+>/i;
+
 // #7298: escape - to avoid being pased as HTML comment when inlined in page
+// 注释
 var comment = /^<!\--/;
+// IE 条件注释
 var conditionalComment = /^<!\[/;
 
 var IS_REGEX_CAPTURING_BROKEN = false;
+
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === '';
 });
@@ -9138,11 +9155,14 @@ var decodingMap = {
   '&#10;': '\n',
   '&#9;': '\t'
 };
+
 var encodedAttr = /&(?:lt|gt|quot|amp);/g;
 var encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#10|#9);/g;
 
+
 // #5992
 var isIgnoreNewlineTag = makeMap('pre,textarea', true);
+
 var shouldIgnoreFirstNewline = function (tag, html) { return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'; };
 
 function decodeAttr (value, shouldDecodeNewlines) {
@@ -9150,21 +9170,42 @@ function decodeAttr (value, shouldDecodeNewlines) {
   return value.replace(re, function (match) { return decodingMap[match]; })
 }
 
+/**
+ * 解析HTML
+ * 
+ * @param  {[type]} html    [description]
+ * @param  {[type]} options [description]
+ * @return {[type]}         [description]
+ */
 function parseHTML (html, options) {
   _log('', 'fn parseHTML');
+  _log(html, 'fn parseHTML');
+  _log(options, 'fn parseHTML');
 
+  // 标签堆栈 {原始标签名，小写标签，标签属性}
   var stack = [];
+
+  // 期望是HTML字符串
   var expectHTML = options.expectHTML;
+  // 一元标签
   var isUnaryTag$$1 = options.isUnaryTag || no;
   var canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no;
+
+  // 解析字符个数
   var index = 0;
+
+  // 当前html字符串、当前tag
   var last, lastTag;
+
   while (html) {
     last = html;
     // Make sure we're not in a plaintext content element like script/style
     if (!lastTag || !isPlainTextElement(lastTag)) {
       var textEnd = html.indexOf('<');
+
+      // 标签起始符：<
       if (textEnd === 0) {
+        // 是否HTML 注释
         // Comment:
         if (comment.test(html)) {
           var commentEnd = html.indexOf('-->');
@@ -9173,11 +9214,13 @@ function parseHTML (html, options) {
             if (options.shouldKeepComment) {
               options.comment(html.substring(4, commentEnd));
             }
+            // 
             advance(commentEnd + 3);
             continue
           }
         }
 
+        // IE 条件注释
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
         if (conditionalComment.test(html)) {
           var conditionalEnd = html.indexOf(']>');
@@ -9195,8 +9238,10 @@ function parseHTML (html, options) {
           continue
         }
 
+        // 结束标签
         // End tag:
         var endTagMatch = html.match(endTag);
+
         if (endTagMatch) {
           var curIndex = index;
           advance(endTagMatch[0].length);
@@ -9279,11 +9324,22 @@ function parseHTML (html, options) {
   // Clean up any remaining tags
   parseEndTag();
 
+  /**
+   * 移动n个字符，并保存剩下的字符
+   * 
+   * @param  {[type]} n [description]
+   * @return {[type]}   [description]
+   */
   function advance (n) {
     index += n;
     html = html.substring(n);
   }
 
+  /**
+   * 解析开始标签
+   * 
+   * @return {[type]} [description]
+   */
   function parseStartTag () {
     var start = html.match(startTagOpen);
     if (start) {
@@ -9307,6 +9363,12 @@ function parseHTML (html, options) {
     }
   }
 
+  /**
+   * 处理开始标签
+   * 
+   * @param  {[type]} match [description]
+   * @return {[type]}       [description]
+   */
   function handleStartTag (match) {
     var tagName = match.tagName;
     var unarySlash = match.unarySlash;
@@ -9352,8 +9414,17 @@ function parseHTML (html, options) {
     }
   }
 
+  /**
+   * 解析结束标签
+   * 
+   * @param  {[type]} tagName [description]
+   * @param  {[type]} start   [description]
+   * @param  {[type]} end     [description]
+   * @return {[type]}         [description]
+   */
   function parseEndTag (tagName, start, end) {
     var pos, lowerCasedTagName;
+
     if (start == null) { start = index; }
     if (end == null) { end = index; }
 
@@ -9363,6 +9434,7 @@ function parseHTML (html, options) {
 
     // Find the closest opened tag of the same type
     if (tagName) {
+      // 最近存在的闭合标签
       for (pos = stack.length - 1; pos >= 0; pos--) {
         if (stack[pos].lowerCasedTag === lowerCasedTagName) {
           break
@@ -9373,11 +9445,12 @@ function parseHTML (html, options) {
       pos = 0;
     }
 
+    // 不止一个闭合标签
     if (pos >= 0) {
       // Close all the open elements, up the stack
       for (var i = stack.length - 1; i >= pos; i--) {
         //if (process.env.NODE_ENV !== 'production' &&
-		if (
+		    if (
           (i > pos || !tagName) &&
           options.warn
         ) {
@@ -9393,20 +9466,25 @@ function parseHTML (html, options) {
       // Remove the open elements from the stack
       stack.length = pos;
       lastTag = pos && stack[pos - 1].tag;
+
     } else if (lowerCasedTagName === 'br') {
       if (options.start) {
         options.start(tagName, [], true, start, end);
       }
+
     } else if (lowerCasedTagName === 'p') {
+
       if (options.start) {
         options.start(tagName, [], false, start, end);
       }
+
       if (options.end) {
         options.end(tagName, start, end);
       }
     }
-  }
-}
+  } // end parseEndTag
+
+} // end parseHTML
 
 /*  */
 
@@ -9446,6 +9524,8 @@ function createASTElement (
   attrs,
   parent
 ) {
+  _log(tag, 'fn createASTElement');
+
   return {
     type: 1,
     tag: tag,
@@ -9464,7 +9544,7 @@ function parse (
   template,
   options
 ) {
-  _log('', 'fn parse : HTML->AST')
+  _log('', 'fn parse : ')
 
   warn$2 = options.warn || baseWarn;
 
@@ -9507,6 +9587,7 @@ function parse (
     }
   }
 
+  _log('parseHTML:__start ===== ', 'fn parse');
   parseHTML(template, {
     warn: warn$2,
     expectHTML: options.expectHTML,
@@ -9516,6 +9597,7 @@ function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     start: function start (tag, attrs, unary) {
+      _log('', 'fn parse parseHTML');
       // check namespace.
       // inherit parent ns if there is one
       var ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag);
@@ -9626,6 +9708,8 @@ function parse (
     },
 
     end: function end () {
+      _log('', 'fn parse parseHTML');
+
       // remove trailing whitespace
       var element = stack[stack.length - 1];
       var lastNode = element.children[element.children.length - 1];
@@ -9639,6 +9723,8 @@ function parse (
     },
 
     chars: function chars (text) {
+      _log('', 'fn parse chars');
+
       if (!currentParent) {
         //if (process.env.NODE_ENV !== 'production') {
 		    if (true) {
@@ -9662,6 +9748,7 @@ function parse (
       ) {
         return
       }
+
       var children = currentParent.children;
       text = inPre || text.trim()
         ? isTextTag(currentParent) ? text : decodeHTMLCached(text)
@@ -9685,15 +9772,19 @@ function parse (
       }
     },
     comment: function comment (text) {
+      _log('', 'fn parse comment');
+
       currentParent.children.push({
         type: 3,
         text: text,
         isComment: true
       });
     }
-  });
+  }); // end parseHTML
+   _log('parseHTML:_end ======', 'fn parse');
+
   return root
-}
+} // end parse
 
 function processPre (el) {
   if (getAndRemoveAttr(el, 'v-pre') != null) {
@@ -9916,6 +10007,9 @@ function processComponent (el) {
 }
 
 function processAttrs (el) {
+  _log('','fn processAttrs')
+
+
   var list = el.attrsList;
   var i, l, name, rawName, value, modifiers, isProp;
   for (i = 0, l = list.length; i < l; i++) {
@@ -10095,6 +10189,8 @@ function checkForAliasModel (el, value) {
  */
 
 function preTransformNode (el, options) {
+  _log('','fn preTransformNode')
+
   if (el.tag === 'input') {
     var map = el.attrsMap;
     if (!map['v-model']) {
@@ -10157,6 +10253,7 @@ function preTransformNode (el, options) {
 }
 
 function cloneASTElement (el) {
+  _log('', 'fn cloneASTElement');
   return createASTElement(el.tag, el.attrsList.slice(), el.parent)
 }
 
@@ -10195,7 +10292,7 @@ var directives$1 = {
 /*  */
 // ===============================================
 // 解析HTML 配置项
-
+_log('','global baseOptions')
 var baseOptions = {
   expectHTML: true,
   modules: modules$1,
@@ -10230,6 +10327,9 @@ var genStaticKeysCached = cached(genStaticKeys$1);
  * 2. Completely skip them in the patching process.
  */
 function optimize (root, options) {
+  _log('','fn optimize')
+
+
   if (!root) { return }
   isStaticKey = genStaticKeysCached(options.staticKeys || '');
   isPlatformReservedTag = options.isReservedTag || no;
@@ -10488,6 +10588,8 @@ function genFilterCode (key) {
 /*  */
 
 function on (el, dir) {
+  _log('','fn on')
+
   //if (process.env.NODE_ENV !== 'production' && dir.modifiers) {
   if (dir.modifiers) {
     warn("v-on without argument does not support modifiers.");
@@ -10514,6 +10616,8 @@ var baseDirectives = {
 /*  */
 
 var CodegenState = function CodegenState (options) {
+  _log('','fn CodegenState')
+
   this.options = options;
   this.warn = options.warn || baseWarn;
   this.transforms = pluckModuleFunction(options.modules, 'transformCode');
@@ -10531,6 +10635,8 @@ function generate (
   ast,
   options
 ) {
+  _log('','fn generate')
+
   var state = new CodegenState(options);
   var code = ast ? genElement(ast, state) : '_c("div")';
   return {
@@ -10540,6 +10646,8 @@ function generate (
 }
 
 function genElement (el, state) {
+  _log('','fn genElement')
+
   if (el.staticRoot && !el.staticProcessed) {
     return genStatic(el, state)
   } else if (el.once && !el.onceProcessed) {
@@ -10677,6 +10785,7 @@ function genFor (
 }
 
 function genData$2 (el, state) {
+  _log('','fn genData$2')
   var data = '{';
 
   // directives first.
@@ -11175,11 +11284,11 @@ function createCompileToFunctionFn (compile) {
 // HTML解析器 工厂方法
 
 function createCompilerCreator (baseCompile) {
-  _log('', 'createCompilerCreator N');
+  _log('', 'createCompilerCreator ');
 
   // 工厂闭包
   return function createCompiler (baseOptions) {
-    _log('', 'createCompiler N')
+    _log('', 'createCompiler closure')
     function compile (
       template,
       options
@@ -11258,7 +11367,7 @@ var createCompiler = createCompilerCreator(function baseCompile (
 // =====================================================
 
 /*  */
-
+_log('','global createCompiler: ref$1')
 var ref$1 = createCompiler(baseOptions);
 var compileToFunctions = ref$1.compileToFunctions;
 
@@ -11292,7 +11401,7 @@ Vue.prototype.$mount = function (
   el,
   hydrating
 ) {
-  _log(el, 'fn Vue.prototype.$mount set');
+  _log(el, 'fn Vue.prototype.$mount');
 
   el = el && query(el);
 
@@ -11307,10 +11416,11 @@ Vue.prototype.$mount = function (
   }
 
   var options = this.$options;
-  _log(options, '222')
+  
   // resolve template/el and convert to render function
   if (!options.render) {
     var template = options.template;
+
     if (template) {
       if (typeof template === 'string') {
         if (template.charAt(0) === '#') {
@@ -11336,6 +11446,8 @@ Vue.prototype.$mount = function (
     } else if (el) {
       template = getOuterHTML(el);
     }
+
+    // 有模板
     if (template) {
       /* istanbul ignore if */
       //if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -11343,12 +11455,18 @@ Vue.prototype.$mount = function (
         mark('compile');
       }
 
+
+      _log('compileToFunctions:__start =====', 'Vue.prototype.$mount');
+
+      // 开始解析模板
       var ref = compileToFunctions(template, {
         shouldDecodeNewlines: shouldDecodeNewlines,
         shouldDecodeNewlinesForHref: shouldDecodeNewlinesForHref,
-        delimiters: options.delimiters,
-        comments: options.comments
+        delimiters: options.delimiters, // undefined
+        comments: options.comments      // undefined
       }, this);
+
+      _log('compileToFunctions:__end ======', 'Vue.prototype.$mount');
 
       var render = ref.render;
       var staticRenderFns = ref.staticRenderFns;
@@ -11364,7 +11482,7 @@ Vue.prototype.$mount = function (
     }
   }
 
-  _log(hydrating, 'fn mount.call old:mount ')
+  _log(hydrating, 'fn Vue.prototype.$mount -> mount.call old:mount ')
   return mount.call(this, el, hydrating)
 };
 
