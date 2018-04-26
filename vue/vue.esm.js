@@ -3022,10 +3022,19 @@ function deactivateChildComponent (vm, direct) {
   }
 }
 
+/**
+ * 执行钩子
+ * 
+ * @param  {[type]} vm   [description]
+ * @param  {[type]} hook [description]
+ * @return {[type]}      [description]
+ */
 function callHook (vm, hook) {
+  _log(hook, 'fn callHook')
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget();
   var handlers = vm.$options[hook];
+  _log(handlers, 'fn callHook:' + hook)
   if (handlers) {
     for (var i = 0, j = handlers.length; i < j; i++) {
       try {
@@ -4796,6 +4805,7 @@ function initMixin (Vue) {
     initLifecycle(vm);
     initEvents(vm);
     initRender(vm);
+    _log('', 'fn initMixin hook->beforeCreate')
     callHook(vm, 'beforeCreate');
     initInjections(vm); // resolve injections before data/props
     initState(vm);
@@ -4907,7 +4917,7 @@ function Vue (options) {
   ) {
     warn('Vue is a constructor and should be called with the `new` keyword');
   }
-  _log(options, 'new Vue()')
+  _log(options, '======= START: new Vue() =========')
   this._init(options);
 }
 // Vue.prototype._init
@@ -9321,7 +9331,14 @@ var platformMustUseProp;
 var platformGetTagNamespace;
 
 
-
+/**
+ * 抽象语法树 结构体
+ * 
+ * @param  {[type]} tag    [description]
+ * @param  {[type]} attrs  [description]
+ * @param  {[type]} parent [description]
+ * @return {[type]}        [description]
+ */
 function createASTElement (
   tag,
   attrs,
@@ -9338,6 +9355,7 @@ function createASTElement (
 }
 
 /**
+ * HTML 转换 AST
  * Convert HTML string to AST.
  */
 function parse (
@@ -10072,6 +10090,8 @@ var directives$1 = {
 }
 
 /*  */
+// ===============================================
+// 解析HTML 配置项
 
 var baseOptions = {
   expectHTML: true,
@@ -10085,6 +10105,8 @@ var baseOptions = {
   getTagNamespace: getTagNamespace,
   staticKeys: genStaticKeys(modules$1)
 };
+
+// ===============================================
 
 /*  */
 
@@ -11043,9 +11065,13 @@ function createCompileToFunctionFn (compile) {
 }
 
 /*  */
+// ==============================================
+// HTML解析器 工厂方法
 
 function createCompilerCreator (baseCompile) {
   _log('', 'createCompilerCreator N');
+
+  // 工厂闭包
   return function createCompiler (baseOptions) {
     _log('', 'createCompiler N')
     function compile (
@@ -11082,7 +11108,7 @@ function createCompilerCreator (baseCompile) {
 
       var compiled = baseCompile(template, finalOptions);
       //if (process.env.NODE_ENV !== 'production') {
-	  if (true) {
+	    if (true) {
         errors.push.apply(errors, detectErrors(compiled.ast));
       }
       compiled.errors = errors;
@@ -11098,6 +11124,9 @@ function createCompilerCreator (baseCompile) {
 }
 
 /*  */
+
+// ======================================================
+// HTML解析 工厂闭包实例
 
 // `createCompilerCreator` allows creating compilers that use alternative
 // parser/optimizer/codegen, e.g the SSR optimizing compiler.
@@ -11119,6 +11148,8 @@ var createCompiler = createCompilerCreator(function baseCompile (
     staticRenderFns: code.staticRenderFns
   }
 });
+
+// =====================================================
 
 /*  */
 
@@ -11161,7 +11192,7 @@ Vue.prototype.$mount = function (
   /* istanbul ignore if */
   if (el === document.body || el === document.documentElement) {
     //process.env.NODE_ENV !== 'production' && warn(
-	warn(
+	  warn(
       "Do not mount Vue to <html> or <body> - mount to normal elements instead."
     );
     return this
@@ -11177,7 +11208,7 @@ Vue.prototype.$mount = function (
           template = idToTemplate(template);
           /* istanbul ignore if */
           //if (process.env.NODE_ENV !== 'production' && !template) {
-			if ( !template) {
+			    if ( !template) {
             warn(
               ("Template element not found or is empty: " + (options.template)),
               this
@@ -11199,7 +11230,7 @@ Vue.prototype.$mount = function (
     if (template) {
       /* istanbul ignore if */
       //if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-	   if ( config.performance && mark) {
+	    if ( config.performance && mark) {
         mark('compile');
       }
 

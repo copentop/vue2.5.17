@@ -16,10 +16,14 @@
 	  el: '#app',
 	  data: {
 	    message: 'Hello Vue!'
-	  }
+	  },
+	  created: function () {
+    	// `this` 指向 vm 实例
+    	console.log('message is: ' + this.message)
+  	  }
 	};
 
-	console.log('html -> ', options)
+	console.log('======== html -> ', options)
 	var app = new Vue(options);
 
 </script>
