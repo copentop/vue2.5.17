@@ -3040,7 +3040,8 @@ function deactivateChildComponent (vm, direct) {
  * @return {[type]}      [description]
  */
 function callHook (vm, hook) {
-  _log(hook, 'fn callHook')
+  _log(hook, 'fn callHook');
+
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget();
   var handlers = vm.$options[hook];
@@ -8881,6 +8882,8 @@ Vue.prototype.$mount = function (
   el,
   hydrating
 ) {
+  _log('', 'fn Vue.prototype.$mount');
+
   el = el && inBrowser ? query(el) : undefined;
   return mountComponent(this, el, hydrating)
 };
@@ -11289,7 +11292,7 @@ Vue.prototype.$mount = function (
   el,
   hydrating
 ) {
-  _log(el, 'fn Vue.prototype.$mount');
+  _log(el, 'fn Vue.prototype.$mount set');
 
   el = el && query(el);
 
@@ -11361,7 +11364,7 @@ Vue.prototype.$mount = function (
     }
   }
 
-  _log(hydrating, 'fn mount.call')
+  _log(hydrating, 'fn mount.call old:mount ')
   return mount.call(this, el, hydrating)
 };
 
