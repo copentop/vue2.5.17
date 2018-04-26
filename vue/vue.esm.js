@@ -600,6 +600,11 @@ var hasSymbol =
   typeof Symbol !== 'undefined' && isNative(Symbol) &&
   typeof Reflect !== 'undefined' && isNative(Reflect.ownKeys);
 
+
+/** 
+ * 集合
+ *
+ */
 var _Set;
 /* istanbul ignore if */ // $flow-disable-line
 if (typeof Set !== 'undefined' && isNative(Set)) {
@@ -740,6 +745,8 @@ var uid = 0;
  * directives subscribing to it.
  */
 var Dep = function Dep () {
+  _log('', 'fn Dep');
+
   this.id = uid++;
   this.subs = [];
 };
@@ -835,6 +842,8 @@ prototypeAccessors.child.get = function () {
 Object.defineProperties( VNode.prototype, prototypeAccessors );
 
 var createEmptyVNode = function (text) {
+  _log(text, 'global createEmptyVNode');
+
   if ( text === void 0 ) text = '';
 
   var node = new VNode();
@@ -862,6 +871,7 @@ function cloneVNode (vnode) {
     vnode.componentOptions,
     vnode.asyncFactory
   );
+
   cloned.ns = vnode.ns;
   cloned.isStatic = vnode.isStatic;
   cloned.key = vnode.key;
@@ -871,6 +881,7 @@ function cloneVNode (vnode) {
   cloned.fnScopeId = vnode.fnScopeId;
   cloned.asyncMeta = vnode.asyncMeta;
   cloned.isCloned = true;
+
   return cloned
 }
 
@@ -899,12 +910,16 @@ methodsToPatch.forEach(function (method) {
   // cache original method
   var original = arrayProto[method];
   def(arrayMethods, method, function mutator () {
+
     var args = [], len = arguments.length;
+
     while ( len-- ) args[ len ] = arguments[ len ];
 
     var result = original.apply(this, args);
+
     var ob = this.__ob__;
     var inserted;
+
     switch (method) {
       case 'push':
       case 'unshift':
@@ -914,9 +929,11 @@ methodsToPatch.forEach(function (method) {
         inserted = args.slice(2);
         break
     }
+
     if (inserted) { ob.observeArray(inserted); }
     // notify change
     ob.dep.notify();
+
     return result
   });
 });
@@ -942,10 +959,13 @@ function toggleObserving (value) {
  * collect dependencies and dispatch updates.
  */
 var Observer = function Observer (value) {
+  _log('', 'fn Observer');
+
   this.value = value;
   this.dep = new Dep();
   this.vmCount = 0;
   def(value, '__ob__', this);
+
   if (Array.isArray(value)) {
     var augment = hasProto
       ? protoAugment
@@ -963,6 +983,8 @@ var Observer = function Observer (value) {
  * value type is Object.
  */
 Observer.prototype.walk = function walk (obj) {
+  _log('', 'fn Observer.prototype.walk');
+
   var keys = Object.keys(obj);
   for (var i = 0; i < keys.length; i++) {
     defineReactive(obj, keys[i]);
@@ -981,6 +1003,9 @@ Observer.prototype.observeArray = function observeArray (items) {
 // helpers
 
 /**
+ * 扩充对象target的__proto__属性
+ *
+ *
  * Augment an target Object or Array by intercepting
  * the prototype chain using __proto__
  */
@@ -991,6 +1016,9 @@ function protoAugment (target, src, keys) {
 }
 
 /**
+ * 复制src对象的内容到target上，实现扩充
+ *
+ *
  * Augment an target Object or Array by defining
  * hidden properties.
  */
@@ -1003,14 +1031,18 @@ function copyAugment (target, src, keys) {
 }
 
 /**
+ * 
  * Attempt to create an observer instance for a value,
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
 function observe (value, asRootData) {
+  _log(value, 'fn observe');
+
   if (!isObject(value) || value instanceof VNode) {
     return
   }
+
   var ob;
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__;
@@ -1021,15 +1053,24 @@ function observe (value, asRootData) {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    _log(value, 'fn observe -> new Observer');
     ob = new Observer(value);
   }
+
   if (asRootData && ob) {
     ob.vmCount++;
   }
+
   return ob
 }
 
 /**
+ * 定义一个响应式属性在对象上
+ *
+ *
+ * 借助观察者模式和Object.defineProperty 实现
+ *
+ *
  * Define a reactive property on an Object.
  */
 function defineReactive (
@@ -1039,6 +1080,8 @@ function defineReactive (
   customSetter,
   shallow
 ) {
+  _log({key:key, val:val,obj:obj}, 'fn defineReactive');
+
   var dep = new Dep();
 
   var property = Object.getOwnPropertyDescriptor(obj, key);
@@ -1079,7 +1122,7 @@ function defineReactive (
 	  
       /* eslint-enable no-self-compare */
       //if (process.env.NODE_ENV !== 'production' && customSetter) {
-	if ( customSetter) {
+	    if ( customSetter) {
         customSetter();
       }
 	  
@@ -1100,17 +1143,20 @@ function defineReactive (
  * already exist.
  */
 function set (target, key, val) {
+  _log({key:key, val:val}, 'fn set')
   //if (process.env.NODE_ENV !== 'production' &&
   if (
     (isUndef(target) || isPrimitive(target))
   ) {
     warn(("Cannot set reactive property on undefined, null, or primitive value: " + ((target))));
   }
+
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.length = Math.max(target.length, key);
     target.splice(key, 1, val);
     return val
   }
+
   if (key in target && !(key in Object.prototype)) {
     target[key] = val;
     return val
@@ -1129,6 +1175,7 @@ function set (target, key, val) {
     target[key] = val;
     return val
   }
+
   defineReactive(ob.value, key, val);
   ob.dep.notify();
   return val
@@ -1138,6 +1185,7 @@ function set (target, key, val) {
  * Delete a property and trigger change if necessary.
  */
 function del (target, key) {
+  _log(key, 'fn del')
   //if (process.env.NODE_ENV !== 'production' &&
   if (
     (isUndef(target) || isPrimitive(target))
@@ -4795,7 +4843,7 @@ function renderMixin (Vue) {
 var uid$3 = 0;
 
 function initMixin (Vue) {
-  _log('', 'initMixin')
+  _log('', 'fn initMixin')
 
   Vue.prototype._init = function (options) {
     _log(options, '_init')
@@ -4959,6 +5007,8 @@ function Vue (options) {
   _log(options, '======= START: new Vue() =========')
   this._init(options);
 }
+
+_log('', 'global initMixin');
 // Vue.prototype._init
 initMixin(Vue);
 
