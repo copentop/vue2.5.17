@@ -780,7 +780,7 @@ Dep.prototype.removeSub = function removeSub (sub) {
 };
 
 /** 
- * 将当前发布者作为订阅者加入订阅者队列
+ * 将当前发布者(Dep.target)作为订阅者加入订阅者队列
  */
 Dep.prototype.depend = function depend () {
   if (Dep.target) {
@@ -1076,6 +1076,8 @@ function copyAugment (target, src, keys) {
 /**
  * 获取一个观察者，如果参数拥有__ob__ 属性则返回，或者创建一个观察者
  * 
+ * 参数是对象类型，且不能为VNode实例
+ * 
  * Attempt to create an observer instance for a value,
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
@@ -1140,6 +1142,7 @@ function defineReactive (
     val = obj[key];
   }
 
+  
   var childOb = !shallow && observe(val);
 
   Object.defineProperty(obj, key, {
@@ -1176,8 +1179,11 @@ function defineReactive (
       } else {
         val = newVal;
       }
-
+      
+      
       childOb = !shallow && observe(newVal);
+
+      _log('dep.notify()', 'In Object.defineProperty set:');
       dep.notify();
     }
 
@@ -2945,6 +2951,7 @@ function lifecycleMixin (Vue) {
       return
     }
 
+    _log('beforeDestroy', 'callHook -> beforeDestroy');
     callHook(vm, 'beforeDestroy');
     vm._isBeingDestroyed = true;
     // remove self from parent
@@ -2970,6 +2977,8 @@ function lifecycleMixin (Vue) {
     vm._isDestroyed = true;
     // invoke destroy hooks on current rendered tree
     vm.__patch__(vm._vnode, null);
+
+    _log('beforeDestroy', 'callHook -> destroyed');
     // fire destroyed hook
     callHook(vm, 'destroyed');
     // turn off all instance listeners.
@@ -3014,6 +3023,8 @@ function mountComponent (
       }
     }
   }
+
+  _log('', 'callHook -> beforeMount');
   callHook(vm, 'beforeMount');
 
   var updateComponent;
@@ -3048,6 +3059,8 @@ function mountComponent (
   new Watcher(vm, updateComponent, noop, {
     before: function before () {
       if (vm._isMounted) {
+
+        _log('', 'callHook -> beforeUpdate');
         callHook(vm, 'beforeUpdate');
       }
     }
@@ -3059,6 +3072,8 @@ function mountComponent (
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {
     vm._isMounted = true;
+
+    _log('', 'callHook -> mounted');
     callHook(vm, 'mounted');
   }
   return vm
@@ -3153,6 +3168,8 @@ function activateChildComponent (vm, direct) {
     for (var i = 0; i < vm.$children.length; i++) {
       activateChildComponent(vm.$children[i]);
     }
+
+    _log('', 'callHook -> activated');
     callHook(vm, 'activated');
   }
 }
@@ -3169,6 +3186,8 @@ function deactivateChildComponent (vm, direct) {
     for (var i = 0; i < vm.$children.length; i++) {
       deactivateChildComponent(vm.$children[i]);
     }
+
+    _log('', 'callHook -> deactivated');
     callHook(vm, 'deactivated');
   }
 }
@@ -3296,6 +3315,8 @@ function callUpdatedHooks (queue) {
     var watcher = queue[i];
     var vm = watcher.vm;
     if (vm._watcher === watcher && vm._isMounted) {
+
+      _log('', 'callHook -> updated');
       callHook(vm, 'updated');
     }
   }
@@ -3356,6 +3377,8 @@ function queueWatcher (watcher) {
 var uid$1 = 0;
 
 /**
+ * 为对象绑定一个Watcher实例，该Watcher实例拥有订阅者列表（this.dep）
+ * 
  * A watcher parses an expression, collects dependencies,
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
@@ -3375,6 +3398,7 @@ var Watcher = function Watcher (
   }
 
   vm._watchers.push(this);
+
   // options
   if (options) {
     this.deep = !!options.deep;
@@ -3454,6 +3478,8 @@ Watcher.prototype.get = function get () {
 };
 
 /**
+ * 添加订阅者
+ * 
  * Add a dependency to this directive.
  */
 Watcher.prototype.addDep = function addDep (dep) {
@@ -3469,6 +3495,8 @@ Watcher.prototype.addDep = function addDep (dep) {
 };
 
 /**
+ * 删除所有订阅者
+ * 
  * Clean up for dependency collection.
  */
 Watcher.prototype.cleanupDeps = function cleanupDeps () {
@@ -3481,6 +3509,7 @@ Watcher.prototype.cleanupDeps = function cleanupDeps () {
       dep.removeSub(this$1);
     }
   }
+
   var tmp = this.depIds;
   this.depIds = this.newDepIds;
   this.newDepIds = tmp;
@@ -3796,6 +3825,8 @@ function getData (data, vm) {
 var computedWatcherOptions = { computed: true };
 
 function initComputed (vm, computed) {
+  _log('', 'fn initComputed');
+
   // $flow-disable-line
   var watchers = vm._computedWatchers = Object.create(null);
   // computed properties are just getters during SSR
@@ -3813,6 +3844,7 @@ function initComputed (vm, computed) {
     }
 
     if (!isSSR) {
+      _log('new Watcher()', 'fn initComputed');
       // create internal watcher for the computed property.
       watchers[key] = new Watcher(
         vm,
@@ -3828,7 +3860,7 @@ function initComputed (vm, computed) {
     if (!(key in vm)) {
       defineComputed(vm, key, userDef);
     //} else if (process.env.NODE_ENV !== 'production') {
-	} else if (true) {
+	  } else if (true) {
       if (key in vm.$data) {
         warn(("The computed property \"" + key + "\" is already defined in data."), vm);
       } else if (vm.$options.props && key in vm.$options.props) {
@@ -3838,11 +3870,18 @@ function initComputed (vm, computed) {
   }
 }
 
+/** 
+ * 计算属性
+ * 
+ * 
+ */
 function defineComputed (
   target,
   key,
   userDef
 ) {
+  _log('', 'fn defineComputed');
+
   var shouldCache = !isServerRendering();
   if (typeof userDef === 'function') {
     sharedPropertyDefinition.get = shouldCache
@@ -3883,10 +3922,12 @@ function createComputedGetter (key) {
 }
 
 function initMethods (vm, methods) {
+  _log('', 'fn initMethods');
+
   var props = vm.$options.props;
   for (var key in methods) {
     //if (process.env.NODE_ENV !== 'production') {
-	if (true) {
+	  if (true) {
       if (methods[key] == null) {
         warn(
           "Method \"" + key + "\" has an undefined value in the component definition. " +
@@ -3912,6 +3953,8 @@ function initMethods (vm, methods) {
 }
 
 function initWatch (vm, watch) {
+  _log('', 'fn initWatch');
+
   for (var key in watch) {
     var handler = watch[key];
     if (Array.isArray(handler)) {
@@ -3930,6 +3973,8 @@ function createWatcher (
   handler,
   options
 ) {
+  _log('', 'fn createWatcher');
+
   if (isPlainObject(handler)) {
     options = handler;
     handler = handler.handler;
@@ -3941,6 +3986,8 @@ function createWatcher (
 }
 
 function stateMixin (Vue) {
+  _log('', 'fn stateMixin');
+
   // flow somehow has problems with directly declared definition object
   // when using Object.defineProperty, so we have to procedurally build up
   // the object here.
@@ -3972,12 +4019,16 @@ function stateMixin (Vue) {
     cb,
     options
   ) {
+    _log('', 'fn Vue.prototype.$watch');
+
     var vm = this;
     if (isPlainObject(cb)) {
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {};
     options.user = true;
+
+    _log('new Watcher()', 'fn Vue.prototype.$watch');
     var watcher = new Watcher(vm, expOrFn, cb, options);
     if (options.immediate) {
       cb.call(vm, watcher.value);
@@ -4205,6 +4256,8 @@ function bindObjectProps (
   asProp,
   isSync
 ) {
+  _log('', 'fn bindObjectProps');
+
   if (value) {
     if (!isObject(value)) {
       //process.env.NODE_ENV !== 'production' && warn(
@@ -4312,10 +4365,12 @@ function markStaticNode (node, key, isOnce) {
 /*  */
 
 function bindObjectListeners (data, value) {
+  _log('', 'fn bindObjectListeners');
+
   if (value) {
     if (!isPlainObject(value)) {
       //process.env.NODE_ENV !== 'production' && warn(
-	  warn(
+	    warn(
         'v-on without argument expects an Object value',
         this
       );
@@ -4334,7 +4389,8 @@ function bindObjectListeners (data, value) {
 /*  */
 
 function installRenderHelpers (target) {
-  _log('', 'fn installRenderHelpers helper function')
+  _log('', 'fn installRenderHelpers helper function');
+
   target._o = markOnce;
   target._n = toNumber;
   target._s = toString;
@@ -4367,6 +4423,7 @@ function FunctionalRenderContext (
   // ensure the createElement function in functional components
   // gets a unique context - this is necessary for correct named slot check
   var contextVm;
+  
   if (hasOwn(parent, '_uid')) {
     contextVm = Object.create(parent);
     // $flow-disable-line
@@ -4379,6 +4436,7 @@ function FunctionalRenderContext (
     // $flow-disable-line
     parent = parent._original;
   }
+
   var isCompiled = isTrue(options._compiled);
   var needNormalization = !isCompiled;
 
@@ -4412,7 +4470,7 @@ function FunctionalRenderContext (
     this._c = function (a, b, c, d) { return createElement(contextVm, a, b, c, d, needNormalization); };
   }
 }
-
+_log('', 'global installRenderHelpers');
 installRenderHelpers(FunctionalRenderContext.prototype);
 
 function createFunctionalComponent (
@@ -4422,6 +4480,8 @@ function createFunctionalComponent (
   contextVm,
   children
 ) {
+  _log('', 'fn createFunctionalComponent');
+
   var options = Ctor.options;
   var props = {};
   var propOptions = options.props;
@@ -4434,6 +4494,7 @@ function createFunctionalComponent (
     if (isDef(data.props)) { mergeProps(props, data.props); }
   }
 
+  _log('new FunctionalRenderContext', 'fn createFunctionalComponent');
   var renderContext = new FunctionalRenderContext(
     data,
     props,
@@ -4533,6 +4594,8 @@ var componentVNodeHooks = {
     var componentInstance = vnode.componentInstance;
     if (!componentInstance._isMounted) {
       componentInstance._isMounted = true;
+
+      _log('', 'callHook -> mounted');
       callHook(componentInstance, 'mounted');
     }
     if (vnode.data.keepAlive) {
@@ -5057,12 +5120,16 @@ function initMixin (Vue) {
     initEvents(vm);
     initRender(vm);
 
-    _log('', 'fn initMixin hook->beforeCreate')
+    _log('beforeCreate', 'fn initMixin hook')
     callHook(vm, 'beforeCreate');
+
     initInjections(vm); // resolve injections before data/props
     initState(vm);
     initProvide(vm); // resolve provide after data/props
+
+    _log('created [', 'fn initMixin hook');
     callHook(vm, 'created');
+    _log('created ]', 'fn initMixin hook')
 
     /* istanbul ignore if */
     //if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -6750,6 +6817,8 @@ var directives = {
 }
 
 function updateDirectives (oldVnode, vnode) {
+  _log('', 'fn updateDirectives');
+
   if (oldVnode.data.directives || vnode.data.directives) {
     _update(oldVnode, vnode);
   }
