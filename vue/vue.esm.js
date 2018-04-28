@@ -6071,6 +6071,12 @@ var isReservedTag = function (tag) {
   return isHTMLTag(tag) || isSVG(tag)
 };
 
+/**
+ * 获取标签命名空间
+ * 
+ * @param  {[type]} tag [description]
+ * @return {[type]}     [description]
+ */
 function getTagNamespace (tag) {
   if (isSVG(tag)) {
     return 'svg'
@@ -9767,12 +9773,13 @@ function decodeAttr (value, shouldDecodeNewlines) {
  * @return {[type]}         [description]
  */
 function parseHTML (html, options) {
-  _log('', 'fn parseHTML');
-  _log(html, 'fn parseHTML');
-  _log(options, 'fn parseHTML');
+  _log('=================', 'fn parseHTML');
+  // _log(html, 'fn parseHTML');
+  // _log(options, 'fn parseHTML');
   _logi('parseHTML');
 
-  // 标签堆栈 {原始标签名，小写标签，标签属性}
+
+  // { tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs }
   var stack = [];
 
   // 期望是HTML字符串
@@ -9780,6 +9787,7 @@ function parseHTML (html, options) {
   // 一元标签
   var isUnaryTag$$1 = options.isUnaryTag || no;
   var canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no;
+
 
   // 解析字符个数
   var index = 0;
@@ -9796,6 +9804,7 @@ function parseHTML (html, options) {
 
       // 标签起始符：<
       if (textEnd === 0) {
+
         // 是否HTML 注释
         // Comment:
         if (comment.test(html)) {
@@ -9833,23 +9842,32 @@ function parseHTML (html, options) {
         // End tag:
         var endTagMatch = html.match(endTag);
 
+        // 闭合标签，不区分多行: <div>aa</div>: 0 -> </div> 1:div
         if (endTagMatch) {
           var curIndex = index;
           advance(endTagMatch[0].length);
+
           parseEndTag(endTagMatch[1], curIndex, index);
           continue
         }
 
+
+        // {tagName: "div", attrs: Array(1), start: 0, unarySlash: "", end: 14}
+        // [" id="app"", "id", "=", "app", undefined, undefined, index: 0, input: ""]
         // Start tag:
         var startTagMatch = parseStartTag();
+      
         if (startTagMatch) {
+
           handleStartTag(startTagMatch);
+
           if (shouldIgnoreFirstNewline(lastTag, html)) {
             advance(1);
           }
           continue
         }
       }
+
 
       var text = (void 0), rest = (void 0), next = (void 0);
       if (textEnd >= 0) {
@@ -9879,6 +9897,8 @@ function parseHTML (html, options) {
         options.chars(text);
       }
     } else {
+
+
       var endTagLength = 0;
       var stackedTag = lastTag.toLowerCase();
       var reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'));
@@ -9902,10 +9922,11 @@ function parseHTML (html, options) {
       parseEndTag(stackedTag, index - endTagLength, index);
     }
 
+    // 解析失败
     if (html === last) {
       options.chars && options.chars(html);
       //if (process.env.NODE_ENV !== 'production' && !stack.length && options.warn) {
-	  if ( !stack.length && options.warn) {
+	    if ( !stack.length && options.warn) {
         options.warn(("Mal-formatted tag at end of template: \"" + html + "\""));
       }
       break
@@ -9933,27 +9954,38 @@ function parseHTML (html, options) {
    * @return {[type]} [description]
    */
   function parseStartTag () {
+    // /^<((?:[a-zA-Z_][\w\-\.]*\:)?[a-zA-Z_][\w\-\.]*)/
     var start = html.match(startTagOpen);
+
     if (start) {
       var match = {
         tagName: start[1],
         attrs: [],
         start: index
       };
+
       advance(start[0].length);
+
       var end, attr;
+      // startTagClose: /^\s*(\/?)>/
+      // attribute /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+      // 
+      // [" class="app"", "class", "=", "app", undefined, undefined, index: 0, input:""]
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+
         advance(attr[0].length);
         match.attrs.push(attr);
       }
+
       if (end) {
         match.unarySlash = end[1];
         advance(end[0].length);
         match.end = index;
+
         return match
       }
     }
-  }
+  } // end parseStartTag
 
   /**
    * 处理开始标签
@@ -9965,20 +9997,28 @@ function parseHTML (html, options) {
     var tagName = match.tagName;
     var unarySlash = match.unarySlash;
 
+
     if (expectHTML) {
+
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
         parseEndTag(lastTag);
       }
+
       if (canBeLeftOpenTag$$1(tagName) && lastTag === tagName) {
+
         parseEndTag(tagName);
       }
     }
 
     var unary = isUnaryTag$$1(tagName) || !!unarySlash;
 
+
+
     var l = match.attrs.length;
     var attrs = new Array(l);
+
     for (var i = 0; i < l; i++) {
+
       var args = match.attrs[i];
       // hackish work around FF bug https://bugzilla.mozilla.org/show_bug.cgi?id=369778
       if (IS_REGEX_CAPTURING_BROKEN && args[0].indexOf('""') === -1) {
@@ -9986,14 +10026,18 @@ function parseHTML (html, options) {
         if (args[4] === '') { delete args[4]; }
         if (args[5] === '') { delete args[5]; }
       }
+
       var value = args[3] || args[4] || args[5] || '';
+
       var shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
         ? options.shouldDecodeNewlinesForHref
         : options.shouldDecodeNewlines;
+
       attrs[i] = {
         name: args[1],
         value: decodeAttr(value, shouldDecodeNewlines)
       };
+
     }
 
     if (!unary) {
@@ -10002,9 +10046,11 @@ function parseHTML (html, options) {
     }
 
     if (options.start) {
+      _log('options.start', '')
       options.start(tagName, attrs, unary, match.start, match.end);
     }
-  }// end handleStartTag
+
+  } // end handleStartTag
 
   /**
    * 解析结束标签
@@ -10076,6 +10122,7 @@ function parseHTML (html, options) {
     }
   } // end parseEndTag
 
+  _log('=================', 'fn parseHTML');
 } // end parseHTML
 
 // ==================================================
@@ -10120,6 +10167,7 @@ function createASTElement (
 ) {
   _log(tag, 'fn createASTElement');
 
+
   return {
     type: 1,
     tag: tag,
@@ -10147,9 +10195,11 @@ function parse (
   platformMustUseProp = options.mustUseProp || no;
   platformGetTagNamespace = options.getTagNamespace || no;
 
+
   transforms = pluckModuleFunction(options.modules, 'transformNode');
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode');
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode');
+
 
 
 
@@ -10198,7 +10248,8 @@ function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     start: function start (tag, attrs, unary) {
-      _log('', 'fn parse parseHTML');
+      _log('start', 'fn parse -> parseHTML');
+
       // check namespace.
       // inherit parent ns if there is one
       var ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag);
@@ -10209,6 +10260,7 @@ function parse (
         attrs = guardIESVGBug(attrs);
       }
 
+      _log(tag, 'createASTElement');
       var element = createASTElement(tag, attrs, currentParent);
       if (ns) {
         element.ns = ns;
@@ -10225,20 +10277,26 @@ function parse (
         );
       }
 
+      _log('', 'preTransformNode');
       // apply pre-transforms
       for (var i = 0; i < preTransforms.length; i++) {
         element = preTransforms[i](element, options) || element;
       }
 
       if (!inVPre) {
+        // 不编译 v-pre 指令的内容
         processPre(element);
         if (element.pre) {
           inVPre = true;
         }
       }
+
+      // 是否html pre 标签
       if (platformIsPreTag(element.tag)) {
         inPre = true;
       }
+
+      // 处理元素的指令属性
       if (inVPre) {
         processRawAttrs(element);
       } else if (!element.processed) {
@@ -10309,7 +10367,7 @@ function parse (
     }, // end start
 
     end: function end () {
-      _log('', 'fn parse parseHTML');
+      _log('end', 'fn parse -> parseHTML');
 
       // remove trailing whitespace
       var element = stack[stack.length - 1];
@@ -10324,7 +10382,7 @@ function parse (
     }, // end end
 
     chars: function chars (text) {
-      _log('', 'fn parse chars');
+      _log('chars', 'fn parse -> parseHTML');
 
       if (!currentParent) {
         //if (process.env.NODE_ENV !== 'production') {
@@ -10373,7 +10431,7 @@ function parse (
       }
     }, // end chars
     comment: function comment (text) {
-      _log('', 'fn parse comment');
+      _log('comment', 'fn parse -> parseHTML');
 
       currentParent.children.push({
         type: 3,
@@ -10389,12 +10447,25 @@ function parse (
 } // end parse
 
 
+/**
+ * 删除 v-pre 属性
+ * 
+ * @param  {[type]} el [description]
+ * @return {[type]}    [description]
+ */
 function processPre (el) {
   if (getAndRemoveAttr(el, 'v-pre') != null) {
     el.pre = true;
   }
 }
 
+/**
+ * 元素原始属性
+ *
+ * 
+ * @param  {[type]} el [description]
+ * @return {[type]}    [description]
+ */
 function processRawAttrs (el) {
   var l = el.attrsList.length;
   if (l) {
@@ -10446,6 +10517,12 @@ function processRef (el) {
   }
 }
 
+/**
+ * v-for 指令
+ * 
+ * @param  {[type]} el [description]
+ * @return {[type]}    [description]
+ */
 function processFor (el) {
   var exp;
   if ((exp = getAndRemoveAttr(el, 'v-for'))) {
@@ -10453,6 +10530,7 @@ function processFor (el) {
     if (res) {
       extend(el, res);
     } else if (process.env.NODE_ENV !== 'production') {
+      
       warn$2(
         ("Invalid v-for expression: " + exp)
       );
@@ -10782,6 +10860,9 @@ function checkForAliasModel (el, value) {
 /*  */
 
 /**
+ * 预转换 input[v-model] 的动态type 类型
+ *
+ * 
  * Expand input[v-model] with dyanmic type bindings into v-if-else chains
  * Turn this:
  *   <input v-model="data[type]" :type="type">
