@@ -6759,7 +6759,17 @@ function createPatchFunction (backend) {
     }
   }
 
+  /**
+   * [patchVnode description]
+   * @param  {[type]} oldVnode           [description]
+   * @param  {[type]} vnode              [description]
+   * @param  {[type]} insertedVnodeQueue [description]
+   * @param  {[type]} removeOnly         [description]
+   * @return {[type]}                    [description]
+   */
   function patchVnode (oldVnode, vnode, insertedVnodeQueue, removeOnly) {
+    _log('', 'fn patchVnode');
+    
     if (oldVnode === vnode) {
       return
     }
